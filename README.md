@@ -1,2 +1,5 @@
 # GoNextFund
-WIP
+
+WIP: dev in progress
+
+
