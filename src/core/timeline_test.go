@@ -241,40 +241,36 @@ func TestTimeline_Aggregate_ShouldReturn3Periods(t *testing.T) {
 		Items: []PeriodValue[int]{
 			{
 				Period: *jan2024,
-				Value:  123,
+				Value:  100,
 			},
 			{
 				Period: *feb2024,
-				Value:  456,
+				Value:  200,
 			},
 			{
 				Period: *mar2024,
-				Value:  69,
+				Value:  300,
 			},
 			{
 				Period: *day15jan2024,
-				Value:  987,
+				Value:  80,
 			},
 		},
 	}
 	timeline.SortTimelineByStart()
 
-	timeline.Aggregate(func(p Period, values []int) int {
-		var sum int
-		for _, value := range values {
-			sum += value
-		}
-		return sum
+	result := timeline.Aggregate(func(p Period, a int, b int) int {
+		return a + b
 	})
 
-	if len(timeline.Items) != 3 {
-		t.Errorf("Expected 3 items, got %d", len(timeline.Items))
+	if len(result.Items) != 3 {
+		t.Errorf("Expected 3 items, got %d", len(result.Items))
 	}
 
-	if !timeline.Items[0].Period.Equal(*jan2024) {
-		t.Errorf("Expected period to be %v, got %v", *jan2024, timeline.Items[0])
+	if !result.Items[0].Period.Equal(*jan2024) {
+		t.Errorf("Expected period to be %v, got %v", *jan2024, result.Items[0])
 	}
-	if !timeline.Items[1].Period.Equal(*feb2024) {
-		t.Errorf("Expected period to be %v, got %v", *feb2024, timeline.Items[1])
+	if !result.Items[1].Period.Equal(*feb2024) {
+		t.Errorf("Expected period to be %v, got %v", *feb2024, result.Items[1])
 	}
 }
