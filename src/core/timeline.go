@@ -24,14 +24,6 @@ func (t *Timeline[T]) SortTimelineByStart() {
 	})
 }
 
-// Helper function to find the minimum of two times
-func minTime(t1, t2 time.Time) time.Time {
-	if t1.Before(t2) {
-		return t1
-	}
-	return t2
-}
-
 func (t *Timeline[T]) FindIntersects(period Period) []PeriodValue[T] {
 	var items []PeriodValue[T]
 
@@ -65,4 +57,37 @@ func (t *Timeline[T]) Add(newPeriod Period, newValue T) {
 // GetAll returns all PeriodValues in the Timeline
 func (t *Timeline[T]) GetAll() []PeriodValue[T] {
 	return t.Items
+}
+
+// Aggregate returns another Timeline having all values with same period aggregated, slicing them if necessary.
+func (t *Timeline[T]) Aggregate(f func(p Period, values []T) T) Timeline[T] {
+	var items []PeriodValue[T]
+	var overlapping []PeriodValue[T]
+	var maxDate time.Time
+
+	for i, current := range t.Items {
+		if i == 0 {
+			overlapping = make([]PeriodValue[T], 0)
+			overlapping = append(overlapping, current)
+
+			maxDate = current.Period.End
+			continue
+		}
+
+		// Note that periods are ordered
+		// if current is after buffer, then we can finalize buffer and compute next period
+		if current.Period.Start.After(maxDate) {
+			items = append(items, buffer)
+			maxDate = current.Period.End
+			continue
+		}
+
+		if current.Period.Intersects(buffer.Period) {
+			//period := NewPeriod(buffer.Period.Start, buffer.Period.End)
+		}
+
+		buffer = current
+	}
+
+	return Timeline[T]{Items: items}
 }

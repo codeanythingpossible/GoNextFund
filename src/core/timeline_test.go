@@ -231,3 +231,50 @@ func TestTimeline_FindIntersects_ShouldReturnZeroPeriod(t *testing.T) {
 		t.Errorf("Expected 0 items, got %d", len(result))
 	}
 }
+
+func TestTimeline_Aggregate_ShouldReturn3Periods(t *testing.T) {
+	jan2024, _ := Month(2024, 1)
+	feb2024, _ := Month(2024, 2)
+	mar2024, _ := Month(2024, 3)
+	day15jan2024, _ := Day(2024, 1, 15)
+	timeline := Timeline[int]{
+		Items: []PeriodValue[int]{
+			{
+				Period: *jan2024,
+				Value:  123,
+			},
+			{
+				Period: *feb2024,
+				Value:  456,
+			},
+			{
+				Period: *mar2024,
+				Value:  69,
+			},
+			{
+				Period: *day15jan2024,
+				Value:  987,
+			},
+		},
+	}
+	timeline.SortTimelineByStart()
+
+	timeline.Aggregate(func(p Period, values []int) int {
+		var sum int
+		for _, value := range values {
+			sum += value
+		}
+		return sum
+	})
+
+	if len(timeline.Items) != 3 {
+		t.Errorf("Expected 3 items, got %d", len(timeline.Items))
+	}
+
+	if !timeline.Items[0].Period.Equal(*jan2024) {
+		t.Errorf("Expected period to be %v, got %v", *jan2024, timeline.Items[0])
+	}
+	if !timeline.Items[1].Period.Equal(*feb2024) {
+		t.Errorf("Expected period to be %v, got %v", *feb2024, timeline.Items[1])
+	}
+}
