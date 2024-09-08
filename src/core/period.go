@@ -100,3 +100,59 @@ func (p *Period) SplitByDays() <-chan Period {
 func (p *Period) SplitByMonths() <-chan Period {
 	return p.Split(func(current time.Time) time.Time { return current.AddDate(0, 1, 0) })
 }
+
+func (p *Period) After(other Period) bool {
+	return other.Start.After(p.End) || other.Start.Equal(p.End)
+}
+
+// Helper function to find the minimum of two times
+func minTime(t1, t2 time.Time) time.Time {
+	if t1.Before(t2) {
+		return t1
+	}
+	return t2
+}
+
+// Helper function to find the maximum of two times
+func maxTime(t1, t2 time.Time) time.Time {
+	if t1.After(t2) {
+		return t1
+	}
+	return t2
+}
+
+// SplitFromPeriod returns a split of periods intersecting with given period
+func (p *Period) SplitFromPeriod(period Period) <-chan Period {
+	ch := make(chan Period)
+
+	go func() {
+		defer close(ch)
+
+		if !p.Intersects(period) {
+			return
+		}
+
+		// before intersecting part
+		if p.Start.Before(period.Start) {
+			ch <- Period{Start: p.Start, End: period.Start}
+		}
+
+		// intersecting part
+		overlapStart := maxTime(p.Start, period.Start)
+		overlapEnd := minTime(p.End, period.End)
+		ch <- Period{
+			Start: overlapStart,
+			End:   overlapEnd,
+		}
+
+		// after intersecting part
+		if p.End.After(period.End) {
+			ch <- Period{
+				Start: period.End,
+				End:   p.End,
+			}
+		}
+	}()
+
+	return ch
+}

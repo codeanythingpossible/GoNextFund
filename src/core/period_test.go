@@ -182,3 +182,57 @@ func TestPeriod_SplitYear2024ByMonths(t *testing.T) {
 		t.Errorf("expected 12 months, got %v", count)
 	}
 }
+
+func TestSplitFromPeriod_NoIntersection(t *testing.T) {
+	p, _ := Month(2024, 1)
+
+	nonIntersectingPeriod, _ := Month(2024, 3)
+
+	splitChan := p.SplitFromPeriod(*nonIntersectingPeriod)
+
+	_, ok := <-splitChan
+	if ok {
+		t.Errorf("Expected no periods, but got a value")
+	}
+}
+
+func TestSplitFromPeriod_ShouldReturn3Periods(t *testing.T) {
+	feb2024, _ := Month(2024, 2)
+	intersectingPeriod, _ := Day(2024, 2, 15)
+
+	splitChan := feb2024.SplitFromPeriod(*intersectingPeriod)
+
+	var results []Period
+	for p := range splitChan {
+		results = append(results, p)
+	}
+
+	if len(results) != 3 {
+		t.Errorf("Expected 3 periods, got %v", len(results))
+	}
+
+	expectedPeriod1, _ := NewPeriod(
+		time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+	)
+	expectedPeriod2, _ := NewPeriod(
+		time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 2, 16, 0, 0, 0, 0, time.UTC),
+	)
+	expectedPeriod3, _ := NewPeriod(
+		time.Date(2024, 2, 16, 0, 0, 0, 0, time.UTC),
+		time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC),
+	)
+
+	if !results[0].Equal(*expectedPeriod1) {
+		t.Errorf("Expected period1 to be %v, got %v", expectedPeriod1, results[0])
+	}
+
+	if !results[1].Equal(*expectedPeriod2) {
+		t.Errorf("Expected period2 to be %v, got %v", expectedPeriod2, results[1])
+	}
+
+	if !results[2].Equal(*expectedPeriod3) {
+		t.Errorf("Expected period3 to be %v, got %v", expectedPeriod3, results[2])
+	}
+}
