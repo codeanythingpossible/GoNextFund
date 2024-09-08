@@ -52,46 +52,11 @@ func (t *Timeline[T]) FindIntersects(period Period) []PeriodValue[T] {
 
 // Add allows adding a new PeriodValue to the Timeline
 func (t *Timeline[T]) Add(newPeriod Period, newValue T) {
-
-	// when items are empty then we juste add new value
-	if len(t.Items) <= 0 {
-		// Update the Timeline items with the new list
-		t.Items = append(t.Items, PeriodValue[T]{
-			Period: newPeriod,
-			Value:  newValue,
-		})
-
-		// Ensure the items are sorted by the Start date after adding
-		t.SortTimelineByStart()
-		return
-	}
-
-	var newItems []PeriodValue[T]
-	added := false
-
-	//for _, item := range t.Items {
-	//	if item.Period.Intersects(newPeriod) {
-	//
-	//		//start1 := minTime(item.Period.Start, newPeriod.Start)
-	//
-	//
-	//	}
-	//	else {
-	//		// If no overlap, we keep the original item
-	//		newItems = append(newItems, item)
-	//	}
-	//}
-
-	// If the new period doesn't overlap with any existing periods, add it at the end
-	if !added {
-		newItems = append(newItems, PeriodValue[T]{
-			Period: newPeriod,
-			Value:  newValue,
-		})
-	}
-
 	// Update the Timeline items with the new list
-	t.Items = newItems
+	t.Items = append(t.Items, PeriodValue[T]{
+		Period: newPeriod,
+		Value:  newValue,
+	})
 
 	// Ensure the items are sorted by the Start date after adding
 	t.SortTimelineByStart()

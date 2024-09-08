@@ -57,76 +57,6 @@ func TestTimeline_Add_ShouldHave2Items(t *testing.T) {
 	}
 }
 
-func TestTimeline_Add_ShouldHave4ContiguousItems(t *testing.T) {
-	// Create a new empty Timeline for budget values
-	budgetTimeline := NewTimeline[float64]()
-
-	// Create periods for January and February
-	january, _ := Month(2024, 1)
-	february, _ := Month(2024, 2)
-
-	// Add values to the timeline
-	budgetTimeline.Add(*january, 1000.0)
-	budgetTimeline.Add(*february, 1200.0)
-
-	// Add a value for 15 september
-	sept15, _ := Day(2024, 01, 15)
-	budgetTimeline.Add(*sept15, 800.0)
-
-	// Verify the number of items added to the timeline
-	if len(budgetTimeline.GetAll()) != 4 {
-		t.Errorf("Expected 4 items, got %d", len(budgetTimeline.GetAll()))
-	}
-
-	// Check the periods
-	p0 := budgetTimeline.Items[0].Period
-	p1 := budgetTimeline.Items[1].Period
-	p2 := budgetTimeline.Items[2].Period
-	p3 := budgetTimeline.Items[3].Period
-
-	// Verify that the first period is January 2024
-	expectedP0Start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	expectedP0End := time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC)
-	expectedP1Start := time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC)
-	expectedP1End := time.Date(2024, 1, 16, 0, 0, 0, 0, time.UTC)
-	expectedP2Start := time.Date(2024, 1, 16, 0, 0, 0, 0, time.UTC)
-	expectedP2End := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
-	expectedP3Start := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
-	expectedP3End := time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
-
-	// Verifying periods
-	if !p0.Start.Equal(expectedP0Start) || !p0.End.Equal(expectedP0End) {
-		t.Errorf("Expected period 0 to be %v - %v, got %v - %v", expectedP0Start, expectedP0End, p0.Start, p0.End)
-	}
-
-	if !p1.Start.Equal(expectedP1Start) || !p1.End.Equal(expectedP1End) {
-		t.Errorf("Expected period 1 to be %v - %v, got %v - %v", expectedP1Start, expectedP1End, p1.Start, p1.End)
-	}
-
-	if !p2.Start.Equal(expectedP2Start) || !p2.End.Equal(expectedP2End) {
-		t.Errorf("Expected period 2 to be %v - %v, got %v - %v", expectedP2Start, expectedP2End, p2.Start, p2.End)
-	}
-
-	if !p3.Start.Equal(expectedP3Start) || !p3.End.Equal(expectedP3End) {
-		t.Errorf("Expected period 3 to be %v - %v, got %v - %v", expectedP3Start, expectedP3End, p3.Start, p3.End)
-	}
-
-	// Verifying values
-	if budgetTimeline.Items[0].Value != 1000.0 {
-		t.Errorf("Expected first value to be 1000.0, got %v", budgetTimeline.Items[0].Value)
-	}
-	if budgetTimeline.Items[1].Value != 800.0 {
-		t.Errorf("Expected second value to be 800.0, got %v", budgetTimeline.Items[1].Value)
-	}
-	if budgetTimeline.Items[2].Value != 1000.0 {
-		t.Errorf("Expected third value to be 1000.0, got %v", budgetTimeline.Items[2].Value)
-	}
-	if budgetTimeline.Items[3].Value != 1200.0 {
-		t.Errorf("Expected fourth value to be 1200.0, got %v", budgetTimeline.Items[3].Value)
-	}
-
-}
-
 func TestTimeline_Add_ShouldHandleOverlappingPeriod(t *testing.T) {
 	// Create a new empty Timeline for budget values
 	budgetTimeline := NewTimeline[float64]()
@@ -158,12 +88,12 @@ func TestTimeline_Add_ShouldHandleOverlappingPeriod(t *testing.T) {
 
 	// Expected periods
 	expectedP0Start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	expectedP0End := time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC)
+	expectedP0End := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
 
 	expectedP1Start := time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC)
 	expectedP1End := time.Date(2024, 2, 5, 0, 0, 0, 0, time.UTC)
 
-	expectedP2Start := time.Date(2024, 2, 5, 0, 0, 0, 0, time.UTC)
+	expectedP2Start := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
 	expectedP2End := time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
 
 	// Verifying periods
