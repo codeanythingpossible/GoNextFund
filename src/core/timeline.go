@@ -62,12 +62,10 @@ func (t *Timeline[T]) GetAll() []PeriodValue[T] {
 func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) Timeline[T] {
 	var items []PeriodValue[T]
 	var buffer PeriodValue[T]
-	//var maxStartDate time.Time
 
 	for i, current := range t.Items {
 		if i == 0 {
 			buffer = current
-			//maxStartDate = current.Period.Start
 			continue
 		}
 
@@ -75,27 +73,24 @@ func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) Timeline[T] {
 		if current.Period.Intersects(buffer.Period) {
 			parts := buffer.Period.SplitFromPeriod(current.Period)
 			for p := range parts {
-				value := f(p, current.Value, buffer.Value)
+
+				var value T
+				if p.Intersects(current.Period) {
+					value = f(p, current.Value, buffer.Value)
+				} else {
+					value = buffer.Value
+				}
 				pv := NewPeriodValue(p, value)
 				items = append(items, pv)
-
-				//if p.Start.After(maxStartDate) {
-				//	buffer = current
-				//	maxStartDate = current.Period.End
-				//}
 			}
-			//continue
 		}
 
 		// if current is after buffer, then we can finalize buffer and compute next period
-		if current.Period.Start.After(buffer.Period.End) {
+		if current.Period.Start.Compare(buffer.Period.End) >= 0 {
 			items = append(items, current)
-			//maxStartDate = current.Period.Start
 			buffer = current
 			continue
 		}
-
-		buffer = current
 	}
 
 	return Timeline[T]{Items: items}

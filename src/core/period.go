@@ -27,6 +27,10 @@ func Day(year int, month int, day int) (*Period, error) {
 	return NewPeriod(start, nextDay)
 }
 
+func DateOnly(year int, month int, day int) time.Time {
+	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+}
+
 // Month returns a Period for the given year and month.
 // The start is the first day of the month, and the end is the first day of the next month (exclusive).
 func Month(year int, month int) (*Period, error) {

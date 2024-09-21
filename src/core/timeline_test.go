@@ -263,14 +263,34 @@ func TestTimeline_Aggregate_ShouldReturn3Periods(t *testing.T) {
 		return a + b
 	})
 
-	if len(result.Items) != 3 {
-		t.Errorf("Expected 3 items, got %d", len(result.Items))
+	if len(result.Items) != 5 {
+		t.Errorf("Expected 5 items, got %d", len(result.Items))
 	}
 
-	if !result.Items[0].Period.Equal(*jan2024) {
-		t.Errorf("Expected period to be %v, got %v", *jan2024, result.Items[0])
+	expectedPv1, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 1), DateOnly(2024, 1, 15), 100)
+	expectedPv2, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 15), DateOnly(2024, 1, 16), 180)
+	expectedPv3, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 16), DateOnly(2024, 2, 1), 100)
+	expectedPv4, _ := NewPeriodValueFromTimes(DateOnly(2024, 2, 1), DateOnly(2024, 3, 1), 200)
+	expectedPv5, _ := NewPeriodValueFromTimes(DateOnly(2024, 3, 1), DateOnly(2024, 4, 1), 300)
+
+	if !result.Items[0].Period.Equal(expectedPv1.Period) || result.Items[0].Value != expectedPv1.Value {
+		t.Errorf("Expected period to be %v, got %v", *expectedPv1, result.Items[0])
 	}
-	if !result.Items[1].Period.Equal(*feb2024) {
-		t.Errorf("Expected period to be %v, got %v", *feb2024, result.Items[1])
+
+	if !result.Items[1].Period.Equal(expectedPv2.Period) || result.Items[1].Value != expectedPv2.Value {
+		t.Errorf("Expected period to be %v, got %v", *expectedPv2, result.Items[1])
 	}
+
+	if !result.Items[2].Period.Equal(expectedPv3.Period) || result.Items[2].Value != expectedPv3.Value {
+		t.Errorf("Expected period to be %v, got %v", *expectedPv3, result.Items[2])
+	}
+
+	if !result.Items[3].Period.Equal(expectedPv4.Period) || result.Items[3].Value != expectedPv4.Value {
+		t.Errorf("Expected period to be %v, got %v", *expectedPv4, result.Items[3])
+	}
+
+	if !result.Items[4].Period.Equal(expectedPv5.Period) || result.Items[4].Value != expectedPv5.Value {
+		t.Errorf("Expected period to be %v, got %v", *expectedPv5, result.Items[4])
+	}
+
 }
