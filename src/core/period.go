@@ -160,3 +160,8 @@ func (p *Period) SplitFromPeriod(period Period) <-chan Period {
 
 	return ch
 }
+
+// IsEmpty checks if period is empty
+func (p *Period) IsEmpty() bool {
+	return !p.Start.Before(p.End)
+}

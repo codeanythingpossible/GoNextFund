@@ -61,18 +61,18 @@ func (t *Timeline[T]) GetAll() []PeriodValue[T] {
 // Aggregate returns another Timeline having all values with same period aggregated, slicing them if necessary.
 func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) Timeline[T] {
 	var items []PeriodValue[T]
-	var buffer *PeriodValue[T] = nil
+	var buffer PeriodValue[T]
 
 	for i, current := range t.Items {
-		if i == 0 || buffer == nil {
-			buffer = &current
+		if i == 0 || buffer.IsEmpty() {
+			buffer = current
 			continue
 		}
 
 		// if current is after buffer, then we can finalize buffer and compute next period
 		if current.Period.Start.Compare(buffer.Period.End) >= 0 {
-			items = append(items, *buffer)
-			buffer = &current
+			items = append(items, buffer)
+			buffer = current
 			continue
 		}
 
@@ -90,16 +90,16 @@ func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) Timeline[T] {
 				pv := NewPeriodValue(p, value)
 				items = append(items, pv)
 			}
-			buffer = nil
+			buffer = PeriodValue[T]{}
 			continue
 		}
 
-		items = append(items, *buffer)
-		buffer = nil
+		items = append(items, buffer)
+		buffer = PeriodValue[T]{}
 	}
 
-	if buffer != nil {
-		items = append(items, *buffer)
+	if !buffer.IsEmpty() {
+		items = append(items, buffer)
 	}
 
 	return Timeline[T]{Items: items}

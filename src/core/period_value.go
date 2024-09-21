@@ -29,3 +29,7 @@ func NewPeriodValueFromTimes[T any](start time.Time, end time.Time, value T) (*P
 	}
 	return &pv, nil
 }
+
+func (p *PeriodValue[T]) IsEmpty() bool {
+	return p.Period.IsEmpty()
+}
