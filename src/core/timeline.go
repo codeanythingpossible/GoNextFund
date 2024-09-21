@@ -16,8 +16,8 @@ func NewTimeline[T any]() Timeline[T] {
 	}
 }
 
-// SortTimelineByStart sorts the Timeline items by the Start date of their Periods
-func (t *Timeline[T]) SortTimelineByStart() {
+// SortTimelineByPeriodStart sorts the Timeline items by the Start date of their Periods
+func (t *Timeline[T]) SortTimelineByPeriodStart() {
 	sort.Slice(t.Items, func(i, j int) bool {
 		return t.Items[i].Period.Start.Before(t.Items[j].Period.Start)
 	})
@@ -50,7 +50,7 @@ func (t *Timeline[T]) Add(newPeriod Period, newValue T) {
 	})
 
 	// Ensure the items are sorted by the Start date after adding
-	t.SortTimelineByStart()
+	t.SortTimelineByPeriodStart()
 }
 
 // GetAll returns all PeriodValues in the Timeline
@@ -61,11 +61,18 @@ func (t *Timeline[T]) GetAll() []PeriodValue[T] {
 // Aggregate returns another Timeline having all values with same period aggregated, slicing them if necessary.
 func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) Timeline[T] {
 	var items []PeriodValue[T]
-	var buffer PeriodValue[T]
+	var buffer *PeriodValue[T] = nil
 
 	for i, current := range t.Items {
-		if i == 0 {
-			buffer = current
+		if i == 0 || buffer == nil {
+			buffer = &current
+			continue
+		}
+
+		// if current is after buffer, then we can finalize buffer and compute next period
+		if current.Period.Start.Compare(buffer.Period.End) >= 0 {
+			items = append(items, *buffer)
+			buffer = &current
 			continue
 		}
 
@@ -83,14 +90,16 @@ func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) Timeline[T] {
 				pv := NewPeriodValue(p, value)
 				items = append(items, pv)
 			}
-		}
-
-		// if current is after buffer, then we can finalize buffer and compute next period
-		if current.Period.Start.Compare(buffer.Period.End) >= 0 {
-			items = append(items, current)
-			buffer = current
+			buffer = nil
 			continue
 		}
+
+		items = append(items, *buffer)
+		buffer = nil
+	}
+
+	if buffer != nil {
+		items = append(items, *buffer)
 	}
 
 	return Timeline[T]{Items: items}
