@@ -259,7 +259,7 @@ func TestTimeline_Aggregate_ShouldReturn5Periods(t *testing.T) {
 	}
 	timeline.SortTimelineByPeriodStart()
 
-	result := timeline.Aggregate(func(p Period, a int, b int) int {
+	result, _ := timeline.Aggregate(func(p Period, a int, b int) int {
 		return a + b
 	})
 
@@ -317,7 +317,7 @@ func TestTimeline_Aggregate_ShouldNotAggregateContiguousPeriodsAndReturnSamePeri
 	}
 	timeline.SortTimelineByPeriodStart()
 
-	result := timeline.Aggregate(func(p Period, a int, b int) int {
+	result, _ := timeline.Aggregate(func(p Period, a int, b int) int {
 		return a + b
 	})
 
@@ -370,7 +370,7 @@ func TestTimeline_AggregateWithMultipleIntersects_ShouldReturn5Periods(t *testin
 	}
 	timeline.SortTimelineByPeriodStart()
 
-	result := timeline.Aggregate(func(p Period, a int, b int) int {
+	result, _ := timeline.Aggregate(func(p Period, a int, b int) int {
 		return a + b
 	})
 
@@ -404,4 +404,80 @@ func TestTimeline_AggregateWithMultipleIntersects_ShouldReturn5Periods(t *testin
 		t.Errorf("Expected period to be %v, got %v", *expectedPv5, result.Items[4])
 	}
 
+}
+
+func TestResolvePeriods(t *testing.T) {
+	// Créer des périodes de test.
+	jan2024, _ := Month(2024, 1)
+	feb2024, _ := Month(2024, 2)
+	mar2024, _ := Month(2024, 3)
+	pv1, _ := NewPeriodValueFromTimes[int](DateOnly(2024, 1, 10), DateOnly(2024, 1, 17), 80)
+	pv2, _ := NewPeriodValueFromTimes[int](DateOnly(2024, 1, 12), DateOnly(2024, 1, 15), 50)
+
+	// Créer la slice de PeriodValue.
+	periodValues := []PeriodValue[int]{
+		{
+			Period: *jan2024,
+			Value:  100,
+		},
+		{
+			Period: *feb2024,
+			Value:  200,
+		},
+		{
+			Period: *mar2024,
+			Value:  300,
+		},
+		*pv1,
+		*pv2,
+	}
+
+	// Appeler resolvePeriods pour obtenir les périodes résolues.
+	resolved := resolvePeriods(periodValues)
+
+	// Définir les périodes attendues.
+	expected := []Period{
+		{
+			Start: DateOnly(2024, 1, 1),
+			End:   DateOnly(2024, 1, 10),
+		},
+		{
+			Start: DateOnly(2024, 1, 10),
+			End:   DateOnly(2024, 1, 12),
+		},
+		{
+			Start: DateOnly(2024, 1, 12),
+			End:   DateOnly(2024, 1, 15),
+		},
+		{
+			Start: DateOnly(2024, 1, 15),
+			End:   DateOnly(2024, 1, 17),
+		},
+		{
+			Start: DateOnly(2024, 1, 17),
+			End:   DateOnly(2024, 2, 1),
+		},
+		{
+			Start: DateOnly(2024, 2, 1),
+			End:   DateOnly(2024, 3, 1),
+		},
+		{
+			Start: DateOnly(2024, 3, 1),
+			End:   DateOnly(2024, 4, 1),
+		},
+	}
+
+	// Vérifier la longueur des résultats.
+	if len(resolved) != len(expected) {
+		t.Fatalf("Expected %d periods, got %d", len(expected), len(resolved))
+	}
+
+	// Vérifier chaque période.
+	for i, p := range expected {
+		if !resolved[i].Start.Equal(p.Start) || !resolved[i].End.Equal(p.End) {
+			t.Errorf("Period %d mismatch. Expected: %v - %v, Got: %v - %v",
+				i, p.Start.Format("2006-01-02"), p.End.Format("2006-01-02"),
+				resolved[i].Start.Format("2006-01-02"), resolved[i].End.Format("2006-01-02"))
+		}
+	}
 }

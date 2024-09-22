@@ -1,6 +1,8 @@
 package core
 
-import "time"
+import (
+	"time"
+)
 
 // PeriodValue associate a value to given period
 type PeriodValue[T any] struct {
@@ -32,4 +34,12 @@ func NewPeriodValueFromTimes[T any](start time.Time, end time.Time, value T) (*P
 
 func (p *PeriodValue[T]) IsEmpty() bool {
 	return p.Period.IsEmpty()
+}
+
+func (p *PeriodValue[T]) Clamp(limit Period) (PeriodValue[T], error) {
+	clamp, err := p.Period.Clamp(limit)
+	if err != nil {
+		return PeriodValue[T]{}, err
+	}
+	return PeriodValue[T]{Period: clamp, Value: p.Value}, nil
 }

@@ -1,7 +1,9 @@
 package core
 
 import (
+	"errors"
 	"sort"
+	"time"
 )
 
 // Timeline represents a list of PeriodValue objects
@@ -59,48 +61,99 @@ func (t *Timeline[T]) GetAll() []PeriodValue[T] {
 }
 
 // Aggregate returns another Timeline having all values with same period aggregated, slicing them if necessary.
-func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) Timeline[T] {
+func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) (Timeline[T], error) {
 	var items []PeriodValue[T]
-	var buffer PeriodValue[T]
+	var buffer []PeriodValue[T]
+	var currentPeriod Period
 
-	for i, current := range t.Items {
-		if i == 0 || buffer.IsEmpty() {
-			buffer = current
+	for i, next := range t.Items {
+		if i == 0 {
+			currentPeriod = next.Period
+			buffer = append(buffer, next)
 			continue
 		}
 
-		// if current is after buffer, then we can finalize buffer and compute next period
-		if current.Period.Start.Compare(buffer.Period.End) >= 0 {
-			items = append(items, buffer)
-			buffer = current
-			continue
+		// We assume that periods are chronologically sorted
+		if next.Period.Before(currentPeriod) {
+			return Timeline[T]{}, errors.New("timeline should have sorted periods")
 		}
 
-		// Note that periods are ordered
-		if current.Period.Intersects(buffer.Period) {
-			parts := buffer.Period.SplitFromPeriod(current.Period)
-			for p := range parts {
+		if next.Period.After(currentPeriod) {
 
-				var value T
-				if p.Intersects(current.Period) {
-					value = f(p, current.Value, buffer.Value)
-				} else {
-					value = buffer.Value
+			periods := resolvePeriods(buffer)
+
+			for _, period := range periods {
+				var currentValue T
+
+				for _, candidate := range buffer {
+					if candidate.Period.Intersects(period) {
+						currentValue = f(period, candidate.Value, currentValue)
+					}
 				}
-				pv := NewPeriodValue(p, value)
-				items = append(items, pv)
+
+				items = append(items, NewPeriodValue(period, currentValue))
 			}
-			buffer = PeriodValue[T]{}
+
+			currentPeriod = next.Period
+
+			buffer = clampPeriods(buffer, currentPeriod)
+			buffer = append(buffer, next)
+
 			continue
 		}
 
-		items = append(items, buffer)
-		buffer = PeriodValue[T]{}
+		period, err := NewPeriod(currentPeriod.Start, maxTime(next.Period.Start, currentPeriod.End))
+		if err != nil {
+			return Timeline[T]{}, err
+		}
+		currentPeriod = *period
+		buffer = append(buffer, next)
 	}
 
-	if !buffer.IsEmpty() {
-		items = append(items, buffer)
+	for _, pv := range buffer {
+		items = append(items, pv)
 	}
 
-	return Timeline[T]{Items: items}
+	return Timeline[T]{Items: items}, nil
+}
+
+func clampPeriods[T any](periodValues []PeriodValue[T], limit Period) []PeriodValue[T] {
+	var results []PeriodValue[T]
+
+	for _, pv := range periodValues {
+		clamp, err := pv.Clamp(limit)
+		if err == nil && !clamp.Period.IsEmpty() {
+			results = append(results, clamp)
+		}
+	}
+
+	return results
+}
+
+func resolvePeriods[T any](periodValues []PeriodValue[T]) []Period {
+	var result []Period
+	timeMap := make(map[time.Time]struct{}, len(periodValues)*2)
+
+	for _, pv := range periodValues {
+		timeMap[pv.Period.Start] = struct{}{}
+		timeMap[pv.Period.End] = struct{}{}
+	}
+
+	// Extract keys (times) and ensure order
+	allTimes := make([]time.Time, 0, len(timeMap))
+	for t := range timeMap {
+		allTimes = append(allTimes, t)
+	}
+	sort.Slice(allTimes, func(i, j int) bool {
+		return allTimes[i].Before(allTimes[j])
+	})
+
+	for i := 1; i < len(allTimes); i++ {
+		result = append(result, Period{
+			Start: allTimes[i-1],
+			End:   allTimes[i],
+		})
+	}
+
+	return result
 }

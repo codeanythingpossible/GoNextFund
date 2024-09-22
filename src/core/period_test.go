@@ -236,3 +236,147 @@ func TestSplitFromPeriod_ShouldReturn3Periods(t *testing.T) {
 		t.Errorf("Expected period3 to be %v, got %v", expectedPeriod3, results[2])
 	}
 }
+
+func TestPeriod_Clamp(t *testing.T) {
+	tests := []struct {
+		name        string
+		p           Period
+		limit       Period
+		expected    Period
+		expectError bool
+	}{
+		{
+			name: "Period entirely inside limit",
+			p: Period{
+				Start: DateOnly(2024, 1, 16),
+				End:   DateOnly(2024, 1, 18),
+			},
+			limit: Period{
+				Start: DateOnly(2024, 1, 15),
+				End:   DateOnly(2024, 1, 20),
+			},
+			expected: Period{
+				Start: DateOnly(2024, 1, 16),
+				End:   DateOnly(2024, 1, 18),
+			},
+			expectError: false,
+		},
+		{
+			name: "Period starting before limit",
+			p: Period{
+				Start: DateOnly(2024, 1, 10),
+				End:   DateOnly(2024, 1, 18),
+			},
+			limit: Period{
+				Start: DateOnly(2024, 1, 15),
+				End:   DateOnly(2024, 1, 20),
+			},
+			expected: Period{
+				Start: DateOnly(2024, 1, 15),
+				End:   DateOnly(2024, 1, 18),
+			},
+			expectError: false,
+		},
+		{
+			name: "Periode endind after limit",
+			p: Period{
+				Start: DateOnly(2024, 1, 17),
+				End:   DateOnly(2024, 1, 25),
+			},
+			limit: Period{
+				Start: DateOnly(2024, 1, 15),
+				End:   DateOnly(2024, 1, 20),
+			},
+			expected: Period{
+				Start: DateOnly(2024, 1, 17),
+				End:   DateOnly(2024, 1, 20),
+			},
+			expectError: false,
+		},
+		{
+			name: "Period totally before limit",
+			p: Period{
+				Start: DateOnly(2024, 1, 1),
+				End:   DateOnly(2024, 1, 10),
+			},
+			limit: Period{
+				Start: DateOnly(2024, 1, 15),
+				End:   DateOnly(2024, 1, 20),
+			},
+			expected:    Period{},
+			expectError: true,
+		},
+		{
+			name: "Period totally after limit",
+			p: Period{
+				Start: DateOnly(2024, 1, 21),
+				End:   DateOnly(2024, 1, 25),
+			},
+			limit: Period{
+				Start: DateOnly(2024, 1, 15),
+				End:   DateOnly(2024, 1, 20),
+			},
+			expected:    Period{},
+			expectError: true,
+		},
+		{
+			name: "Period equals limit",
+			p: Period{
+				Start: DateOnly(2024, 1, 15),
+				End:   DateOnly(2024, 1, 20),
+			},
+			limit: Period{
+				Start: DateOnly(2024, 1, 15),
+				End:   DateOnly(2024, 1, 20),
+			},
+			expected: Period{
+				Start: DateOnly(2024, 1, 15),
+				End:   DateOnly(2024, 1, 20),
+			},
+			expectError: false,
+		},
+		{
+			name: "Period greater than limit",
+			p: Period{
+				Start: DateOnly(2024, 1, 10),
+				End:   DateOnly(2024, 1, 25),
+			},
+			limit: Period{
+				Start: DateOnly(2024, 1, 15),
+				End:   DateOnly(2024, 1, 20),
+			},
+			expected: Period{
+				Start: DateOnly(2024, 1, 15),
+				End:   DateOnly(2024, 1, 20),
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &tt.p
+			clamped, err := p.Clamp(tt.limit)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if !clamped.Start.Equal(tt.expected.Start) || !clamped.End.Equal(tt.expected.End) {
+				t.Errorf("Clamped period mismatch.\nExpected: %v - %v\nGot: %v - %v",
+					tt.expected.Start.Format("2006-01-02"),
+					tt.expected.End.Format("2006-01-02"),
+					clamped.Start.Format("2006-01-02"),
+					clamped.End.Format("2006-01-02"))
+			}
+		})
+	}
+}
