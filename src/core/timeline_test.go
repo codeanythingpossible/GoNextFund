@@ -374,15 +374,17 @@ func TestTimeline_AggregateWithMultipleIntersects_ShouldReturn5Periods(t *testin
 		return a + b
 	})
 
-	if len(result.Items) != 5 {
-		t.Errorf("Expected 5 items, got %d", len(result.Items))
+	if len(result.Items) != 7 {
+		t.Errorf("Expected 7 items, got %d", len(result.Items))
 	}
 
-	expectedPv1, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 1), DateOnly(2024, 1, 15), 100)
-	expectedPv2, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 15), DateOnly(2024, 1, 16), 180)
-	expectedPv3, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 16), DateOnly(2024, 2, 1), 100)
-	expectedPv4, _ := NewPeriodValueFromTimes(DateOnly(2024, 2, 1), DateOnly(2024, 3, 1), 200)
-	expectedPv5, _ := NewPeriodValueFromTimes(DateOnly(2024, 3, 1), DateOnly(2024, 4, 1), 300)
+	expectedPv1, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 1), DateOnly(2024, 1, 10), 100)
+	expectedPv2, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 10), DateOnly(2024, 1, 12), 180)
+	expectedPv3, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 12), DateOnly(2024, 1, 15), 100+80+50)
+	expectedPv4, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 15), DateOnly(2024, 1, 17), 100+80)
+	expectedPv5, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 17), DateOnly(2024, 2, 1), 100)
+	expectedPv6, _ := NewPeriodValueFromTimes(DateOnly(2024, 2, 1), DateOnly(2024, 3, 1), 200)
+	expectedPv7, _ := NewPeriodValueFromTimes(DateOnly(2024, 3, 1), DateOnly(2024, 4, 1), 300)
 
 	if !result.Items[0].Period.Equal(expectedPv1.Period) || result.Items[0].Value != expectedPv1.Value {
 		t.Errorf("Expected period to be %v, got %v", *expectedPv1, result.Items[0])
@@ -402,6 +404,14 @@ func TestTimeline_AggregateWithMultipleIntersects_ShouldReturn5Periods(t *testin
 
 	if !result.Items[4].Period.Equal(expectedPv5.Period) || result.Items[4].Value != expectedPv5.Value {
 		t.Errorf("Expected period to be %v, got %v", *expectedPv5, result.Items[4])
+	}
+
+	if !result.Items[5].Period.Equal(expectedPv6.Period) || result.Items[5].Value != expectedPv6.Value {
+		t.Errorf("Expected period to be %v, got %v", *expectedPv6, result.Items[5])
+	}
+
+	if !result.Items[6].Period.Equal(expectedPv7.Period) || result.Items[6].Value != expectedPv7.Value {
+		t.Errorf("Expected period to be %v, got %v", *expectedPv7, result.Items[6])
 	}
 
 }
