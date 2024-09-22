@@ -187,3 +187,8 @@ func (p *Period) Clamp(limit Period) (Period, error) {
 
 	return Empty(), errors.New("limit is outside")
 }
+
+// IsContiguous checks if the other Period is contiguous
+func (p *Period) IsContiguous(other Period) bool {
+	return p.End.Equal(other.Start) || p.Start.Equal(other.End)
+}

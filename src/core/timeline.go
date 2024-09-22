@@ -3,7 +3,6 @@ package core
 import (
 	"errors"
 	"sort"
-	"time"
 )
 
 // Timeline represents a list of PeriodValue objects
@@ -79,8 +78,7 @@ func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) (Timeline[T], erro
 		}
 
 		if next.Period.After(currentPeriod) {
-
-			periods := resolvePeriods(buffer)
+			periods := SplitAllPeriods(buffer)
 
 			for _, period := range periods {
 				var currentValue T
@@ -96,7 +94,7 @@ func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) (Timeline[T], erro
 
 			currentPeriod = next.Period
 
-			buffer = clampPeriods(buffer, currentPeriod)
+			buffer = ClampPeriods(buffer, currentPeriod)
 			buffer = append(buffer, next)
 
 			continue
@@ -117,43 +115,29 @@ func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) (Timeline[T], erro
 	return Timeline[T]{Items: items}, nil
 }
 
-func clampPeriods[T any](periodValues []PeriodValue[T], limit Period) []PeriodValue[T] {
-	var results []PeriodValue[T]
+// Merge all contiguous periods having same value
+func (t *Timeline[T]) Merge(equalityComparer func(a T, b T) bool) Timeline[T] {
+	var previous PeriodValue[T]
+	var items []PeriodValue[T]
 
-	for _, pv := range periodValues {
-		clamp, err := pv.Clamp(limit)
-		if err == nil && !clamp.Period.IsEmpty() {
-			results = append(results, clamp)
+	for i, current := range t.Items {
+		if i == 0 {
+			previous = current
+			continue
 		}
+
+		if current.Period.IsContiguous(previous.Period) && equalityComparer(previous.Value, current.Value) {
+			previous = PeriodValue[T]{Value: previous.Value, Period: Period{Start: previous.Period.Start, End: current.Period.End}}
+			continue
+		}
+
+		items = append(items, previous)
+		previous = current
 	}
 
-	return results
-}
-
-func resolvePeriods[T any](periodValues []PeriodValue[T]) []Period {
-	var result []Period
-	timeMap := make(map[time.Time]struct{}, len(periodValues)*2)
-
-	for _, pv := range periodValues {
-		timeMap[pv.Period.Start] = struct{}{}
-		timeMap[pv.Period.End] = struct{}{}
+	if !previous.IsEmpty() {
+		items = append(items, previous)
 	}
 
-	// Extract keys (times) and ensure order
-	allTimes := make([]time.Time, 0, len(timeMap))
-	for t := range timeMap {
-		allTimes = append(allTimes, t)
-	}
-	sort.Slice(allTimes, func(i, j int) bool {
-		return allTimes[i].Before(allTimes[j])
-	})
-
-	for i := 1; i < len(allTimes); i++ {
-		result = append(result, Period{
-			Start: allTimes[i-1],
-			End:   allTimes[i],
-		})
-	}
-
-	return result
+	return Timeline[T]{Items: items}
 }

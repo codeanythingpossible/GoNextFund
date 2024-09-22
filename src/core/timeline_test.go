@@ -417,14 +417,12 @@ func TestTimeline_AggregateWithMultipleIntersects_ShouldReturn5Periods(t *testin
 }
 
 func TestResolvePeriods(t *testing.T) {
-	// Créer des périodes de test.
 	jan2024, _ := Month(2024, 1)
 	feb2024, _ := Month(2024, 2)
 	mar2024, _ := Month(2024, 3)
 	pv1, _ := NewPeriodValueFromTimes[int](DateOnly(2024, 1, 10), DateOnly(2024, 1, 17), 80)
 	pv2, _ := NewPeriodValueFromTimes[int](DateOnly(2024, 1, 12), DateOnly(2024, 1, 15), 50)
 
-	// Créer la slice de PeriodValue.
 	periodValues := []PeriodValue[int]{
 		{
 			Period: *jan2024,
@@ -442,10 +440,8 @@ func TestResolvePeriods(t *testing.T) {
 		*pv2,
 	}
 
-	// Appeler resolvePeriods pour obtenir les périodes résolues.
-	resolved := resolvePeriods(periodValues)
+	resolved := SplitAllPeriods(periodValues)
 
-	// Définir les périodes attendues.
 	expected := []Period{
 		{
 			Start: DateOnly(2024, 1, 1),
@@ -477,12 +473,10 @@ func TestResolvePeriods(t *testing.T) {
 		},
 	}
 
-	// Vérifier la longueur des résultats.
 	if len(resolved) != len(expected) {
 		t.Fatalf("Expected %d periods, got %d", len(expected), len(resolved))
 	}
 
-	// Vérifier chaque période.
 	for i, p := range expected {
 		if !resolved[i].Start.Equal(p.Start) || !resolved[i].End.Equal(p.End) {
 			t.Errorf("Period %d mismatch. Expected: %v - %v, Got: %v - %v",
@@ -490,4 +484,139 @@ func TestResolvePeriods(t *testing.T) {
 				resolved[i].Start.Format("2006-01-02"), resolved[i].End.Format("2006-01-02"))
 		}
 	}
+}
+
+func TestTimeline_MergeWithContiguousValues_ShouldReturnMergedPeriods(t *testing.T) {
+	jan2024, _ := Month(2024, 1)
+	feb2024, _ := Month(2024, 2)
+	mar2024, _ := Month(2024, 3)
+	apr2024, _ := Month(2024, 4)
+	may2024, _ := Month(2024, 5)
+	jun2024, _ := Month(2024, 6)
+	jul2024, _ := Month(2024, 7)
+	aug2024, _ := Month(2024, 8)
+	sept2024, _ := Month(2024, 9)
+	oct2024, _ := Month(2024, 10)
+	nov2024, _ := Month(2024, 11)
+	dec2024, _ := Month(2024, 12)
+
+	timeline := Timeline[int]{
+		Items: []PeriodValue[int]{
+			{Period: *jan2024, Value: 100},
+			{Period: *feb2024, Value: 200},
+
+			{Period: *mar2024, Value: 300},
+			{Period: *apr2024, Value: 300},
+			{Period: *may2024, Value: 300},
+			{Period: *jun2024, Value: 300},
+
+			{Period: *jul2024, Value: 400},
+
+			{Period: *aug2024, Value: 100},
+
+			{Period: *sept2024, Value: 800},
+			{Period: *oct2024, Value: 800},
+
+			{Period: *nov2024, Value: 900},
+			{Period: *dec2024, Value: 900},
+		},
+	}
+	timeline.SortTimelineByPeriodStart()
+
+	result := timeline.Merge(func(a int, b int) bool {
+		return a == b
+	})
+
+	expectedPv1, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 1), DateOnly(2024, 2, 1), 100)
+	expectedPv2, _ := NewPeriodValueFromTimes(DateOnly(2024, 2, 1), DateOnly(2024, 3, 1), 200)
+	expectedPv3, _ := NewPeriodValueFromTimes(DateOnly(2024, 3, 1), DateOnly(2024, 7, 1), 300)
+	expectedPv4, _ := NewPeriodValueFromTimes(DateOnly(2024, 7, 1), DateOnly(2024, 8, 1), 400)
+	expectedPv5, _ := NewPeriodValueFromTimes(DateOnly(2024, 8, 1), DateOnly(2024, 9, 1), 100)
+	expectedPv6, _ := NewPeriodValueFromTimes(DateOnly(2024, 9, 1), DateOnly(2024, 11, 1), 800)
+	expectedPv7, _ := NewPeriodValueFromTimes(DateOnly(2024, 11, 1), DateOnly(2025, 1, 1), 900)
+
+	expectedValues := []PeriodValue[int]{
+		*expectedPv1,
+		*expectedPv2,
+		*expectedPv3,
+		*expectedPv4,
+		*expectedPv5,
+		*expectedPv6,
+		*expectedPv7,
+	}
+
+	for i, expected := range expectedValues {
+		current := result.Items[i]
+		if current.Period != expected.Period {
+			t.Errorf("Expected period to be %v, got %v", expected.Period, current.Period)
+		}
+		if current.Value != expected.Value {
+			t.Errorf("Expected value for period %v should be %v, got %v", expected.Period, current.Value, expected.Value)
+		}
+	}
+
+}
+
+func TestTimeline_MergeWithMissingValues_ShouldReturnMergedPeriods(t *testing.T) {
+	jan2024, _ := Month(2024, 1)
+	feb2024, _ := Month(2024, 2)
+	mar2024, _ := Month(2024, 3)
+	apr2024, _ := Month(2024, 4)
+	may2024, _ := Month(2024, 5)
+	aug2024, _ := Month(2024, 8)
+	sept2024, _ := Month(2024, 9)
+	oct2024, _ := Month(2024, 10)
+	nov2024, _ := Month(2024, 11)
+	dec2024, _ := Month(2024, 12)
+
+	timeline := Timeline[int]{
+		Items: []PeriodValue[int]{
+			{Period: *jan2024, Value: 100},
+			{Period: *feb2024, Value: 200},
+
+			{Period: *mar2024, Value: 300},
+			{Period: *apr2024, Value: 300},
+			{Period: *may2024, Value: 300},
+
+			{Period: *aug2024, Value: 100},
+
+			{Period: *sept2024, Value: 800},
+			{Period: *oct2024, Value: 800},
+
+			{Period: *nov2024, Value: 900},
+			{Period: *dec2024, Value: 900},
+		},
+	}
+	timeline.SortTimelineByPeriodStart()
+
+	result := timeline.Merge(func(a int, b int) bool {
+		return a == b
+	})
+
+	expectedPv1, _ := NewPeriodValueFromTimes(DateOnly(2024, 1, 1), DateOnly(2024, 2, 1), 100)
+	expectedPv2, _ := NewPeriodValueFromTimes(DateOnly(2024, 2, 1), DateOnly(2024, 3, 1), 200)
+	expectedPv3, _ := NewPeriodValueFromTimes(DateOnly(2024, 3, 1), DateOnly(2024, 6, 1), 300)
+	expectedPv5, _ := NewPeriodValueFromTimes(DateOnly(2024, 8, 1), DateOnly(2024, 9, 1), 100)
+	expectedPv6, _ := NewPeriodValueFromTimes(DateOnly(2024, 9, 1), DateOnly(2024, 11, 1), 800)
+	expectedPv7, _ := NewPeriodValueFromTimes(DateOnly(2024, 11, 1), DateOnly(2025, 1, 1), 900)
+
+	expectedValues := []PeriodValue[int]{
+		*expectedPv1,
+		*expectedPv2,
+		*expectedPv3,
+		*expectedPv5,
+		*expectedPv6,
+		*expectedPv7,
+	}
+
+	for i, expected := range expectedValues {
+		current := result.Items[i]
+		if current.Period != expected.Period {
+			t.Errorf("Expected period to be %v, got %v", expected.Period, current.Period)
+		}
+		if current.Value != expected.Value {
+			t.Errorf("Expected value for period %v should be %v, got %v", expected.Period, current.Value, expected.Value)
+		}
+	}
+
 }
