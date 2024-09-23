@@ -259,7 +259,7 @@ func TestTimeline_Aggregate_ShouldReturn5Periods(t *testing.T) {
 	}
 	timeline.SortTimelineByPeriodStart()
 
-	result, _ := timeline.Aggregate(func(p Period, a int, b int) int {
+	result, _ := timeline.ResolveConflicts(func(p Period, a int, b int) int {
 		return a + b
 	})
 
@@ -317,7 +317,7 @@ func TestTimeline_Aggregate_ShouldNotAggregateContiguousPeriodsAndReturnSamePeri
 	}
 	timeline.SortTimelineByPeriodStart()
 
-	result, _ := timeline.Aggregate(func(p Period, a int, b int) int {
+	result, _ := timeline.ResolveConflicts(func(p Period, a int, b int) int {
 		return a + b
 	})
 
@@ -370,7 +370,7 @@ func TestTimeline_AggregateWithMultipleIntersects_ShouldReturn5Periods(t *testin
 	}
 	timeline.SortTimelineByPeriodStart()
 
-	result, _ := timeline.Aggregate(func(p Period, a int, b int) int {
+	result, _ := timeline.ResolveConflicts(func(p Period, a int, b int) int {
 		return a + b
 	})
 
@@ -523,7 +523,7 @@ func TestTimeline_MergeWithContiguousValues_ShouldReturnMergedPeriods(t *testing
 	}
 	timeline.SortTimelineByPeriodStart()
 
-	result := timeline.Merge(func(a int, b int) bool {
+	result := timeline.Optimize(func(a int, b int) bool {
 		return a == b
 	})
 
@@ -589,7 +589,7 @@ func TestTimeline_MergeWithMissingValues_ShouldReturnMergedPeriods(t *testing.T)
 	}
 	timeline.SortTimelineByPeriodStart()
 
-	result := timeline.Merge(func(a int, b int) bool {
+	result := timeline.Optimize(func(a int, b int) bool {
 		return a == b
 	})
 

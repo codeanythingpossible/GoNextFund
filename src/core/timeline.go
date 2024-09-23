@@ -59,8 +59,8 @@ func (t *Timeline[T]) GetAll() []PeriodValue[T] {
 	return t.Items
 }
 
-// Aggregate returns another Timeline having all values with same period aggregated, slicing them if necessary.
-func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) (Timeline[T], error) {
+// ResolveConflicts returns another Timeline having all values with same period aggregated, slicing them if necessary.
+func (t *Timeline[T]) ResolveConflicts(f func(p Period, a T, b T) T) (Timeline[T], error) {
 	var items []PeriodValue[T]
 	var buffer []PeriodValue[T]
 	var currentPeriod Period
@@ -115,8 +115,8 @@ func (t *Timeline[T]) Aggregate(f func(p Period, a T, b T) T) (Timeline[T], erro
 	return Timeline[T]{Items: items}, nil
 }
 
-// Merge all contiguous periods having same value
-func (t *Timeline[T]) Merge(equalityComparer func(a T, b T) bool) Timeline[T] {
+// Optimize merges all contiguous periods having same value
+func (t *Timeline[T]) Optimize(equalityComparer func(a T, b T) bool) Timeline[T] {
 	var previous PeriodValue[T]
 	var items []PeriodValue[T]
 
