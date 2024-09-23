@@ -141,3 +141,9 @@ func (t *Timeline[T]) Optimize(equalityComparer func(a T, b T) bool) Timeline[T]
 
 	return Timeline[T]{Items: items}
 }
+
+// Aggregate two timelines and return another timeline.
+func (t *Timeline[T]) Aggregate(other *Timeline[T], f func(period Period, a T, b T) T) (*Timeline[T], error) {
+
+	return other, nil
+}

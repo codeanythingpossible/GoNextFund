@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -618,5 +619,50 @@ func TestTimeline_MergeWithMissingValues_ShouldReturnMergedPeriods(t *testing.T)
 			t.Errorf("Expected value for period %v should be %v, got %v", expected.Period, current.Value, expected.Value)
 		}
 	}
+}
+
+func TestTimeline_Aggregate_ShouldReturnAdditions(t *testing.T) {
+	timeline1, err :=
+		NewTimeLineBuilder[int]().
+			AddMonth(2024, 1, 100).
+			AddMonth(2024, 2, 200).
+			AddMonth(2024, 3, 300).
+			AddPeriodValue(PeriodValue[int]{
+				Period: Period{
+					Start: DateOnly(2024, 1, 10),
+					End:   DateOnly(2024, 1, 17),
+				},
+				Value: 80,
+			}).
+			AddPeriodValue(PeriodValue[int]{
+				Period: Period{
+					Start: DateOnly(2024, 1, 12),
+					End:   DateOnly(2024, 1, 15),
+				},
+				Value: 50,
+			}).Build()
+
+	if err != nil {
+		fmt.Println("Could not create timeline:", err)
+		return
+	}
+
+	timeline2, err :=
+		NewTimeLineBuilder[int]().
+			AddMonth(2024, 1, 50).
+			AddMonth(2024, 2, 80).
+			AddPeriodValue(PeriodValue[int]{
+				Period: Period{
+					Start: DateOnly(2024, 3, 1),
+					End:   DateOnly(2024, 6, 15),
+				},
+				Value: 500,
+			}).Build()
+	if err != nil {
+		fmt.Println("Could not create timeline:", err)
+		return
+	}
+
+	result, err := timeline1.Aggregate(&timeline2, func(period Period, a int, b int) int { return a + b })
 
 }
