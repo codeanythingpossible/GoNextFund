@@ -45,6 +45,10 @@ func main() {
 		fmt.Println(pv)
 	}
 
+	// Servir les fichiers statiques depuis "www"
+	fs := http.FileServer(http.Dir("www"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/update", updateHandler)
 	err = http.ListenAndServe(":8080", nil)
@@ -54,7 +58,7 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("index.html"))
+	tmpl := template.Must(template.ParseFiles("www/index.html"))
 	err := tmpl.Execute(w, Data{Message: "Bienvenue dans GoNextFund!"})
 	if err != nil {
 		return
