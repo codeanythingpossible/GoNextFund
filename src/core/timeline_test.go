@@ -625,8 +625,6 @@ func TestTimeline_Aggregate_ShouldReturnAdditions(t *testing.T) {
 	timeline1, err :=
 		NewTimeLineBuilder[int]().
 			AddMonth(2024, 1, 100).
-			AddMonth(2024, 2, 200).
-			AddMonth(2024, 3, 300).
 			AddPeriodValue(PeriodValue[int]{
 				Period: Period{
 					Start: DateOnly(2024, 1, 10),
@@ -640,7 +638,10 @@ func TestTimeline_Aggregate_ShouldReturnAdditions(t *testing.T) {
 					End:   DateOnly(2024, 1, 15),
 				},
 				Value: 50,
-			}).Build()
+			}).
+			AddMonth(2024, 2, 200).
+			AddMonth(2024, 3, 300).
+			Build()
 
 	if err != nil {
 		fmt.Println("Could not create timeline:", err)
@@ -649,7 +650,7 @@ func TestTimeline_Aggregate_ShouldReturnAdditions(t *testing.T) {
 
 	timeline2, err :=
 		NewTimeLineBuilder[int]().
-			AddMonth(2024, 1, 50).
+			AddMonth(2024, 1, 60).
 			AddMonth(2024, 2, 80).
 			AddPeriodValue(PeriodValue[int]{
 				Period: Period{
@@ -659,10 +660,74 @@ func TestTimeline_Aggregate_ShouldReturnAdditions(t *testing.T) {
 				Value: 500,
 			}).Build()
 	if err != nil {
-		fmt.Println("Could not create timeline:", err)
+		t.Errorf("Could not create timeline: %s", err)
 		return
 	}
 
 	result, err := timeline1.Aggregate(&timeline2, func(period Period, a int, b int) int { return a + b })
+	if err != nil {
+		t.Errorf("Could not aggregate: %s", err)
+		return
+	}
+	expected, err :=
+		NewTimeLineBuilder[int]().
+			AddPeriodValue(PeriodValue[int]{
+				Period: Period{
+					Start: DateOnly(2024, 1, 1),
+					End:   DateOnly(2024, 1, 10),
+				},
+				Value: 100 + 60,
+			}).
+			AddPeriodValue(PeriodValue[int]{
+				Period: Period{
+					Start: DateOnly(2024, 1, 10),
+					End:   DateOnly(2024, 1, 12),
+				},
+				Value: 100 + 60 + 80,
+			}).
+			AddPeriodValue(PeriodValue[int]{
+				Period: Period{
+					Start: DateOnly(2024, 1, 12),
+					End:   DateOnly(2024, 1, 15),
+				},
+				Value: 100 + 50 + 80 + 60,
+			}).
+			AddPeriodValue(PeriodValue[int]{
+				Period: Period{
+					Start: DateOnly(2024, 1, 15),
+					End:   DateOnly(2024, 1, 17),
+				},
+				Value: 100 + 80 + 60,
+			}).
+			AddPeriodValue(PeriodValue[int]{
+				Period: Period{
+					Start: DateOnly(2024, 1, 17),
+					End:   DateOnly(2024, 2, 1),
+				},
+				Value: 100 + 60,
+			}).
+			AddMonth(2024, 2, 200+80).
+			AddMonth(2024, 3, 300+500).
+			AddPeriodValue(PeriodValue[int]{
+				Period: Period{
+					Start: DateOnly(2024, 4, 1),
+					End:   DateOnly(2024, 6, 15),
+				},
+				Value: 500,
+			}).
+			Build()
+	if err != nil {
+		t.Errorf("Could not create timeline: %s", err)
+		return
+	}
 
+	for i, expected := range expected.Items {
+		current := result.Items[i]
+		if current.Period != expected.Period {
+			t.Errorf("Expected period to be %v, got %v", expected.Period, current.Period)
+		}
+		if current.Value != expected.Value {
+			t.Errorf("Expected value for period %v should be %v, got %v", expected.Period, expected.Value, current.Value)
+		}
+	}
 }

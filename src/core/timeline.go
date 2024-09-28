@@ -59,6 +59,25 @@ func (t *Timeline[T]) GetAll() []PeriodValue[T] {
 	return t.Items
 }
 
+func computeValuesOnSamePeriods[T any](buffer []PeriodValue[T], f func(p Period, a T, b T) T) []PeriodValue[T] {
+	var items []PeriodValue[T]
+	periods := SplitAllPeriods(buffer)
+
+	for _, period := range periods {
+		var currentValue T
+
+		for _, candidate := range buffer {
+			if candidate.Period.Intersects(period) {
+				currentValue = f(period, candidate.Value, currentValue)
+			}
+		}
+
+		items = append(items, NewPeriodValue(period, currentValue))
+	}
+
+	return items
+}
+
 // ResolveConflicts returns another Timeline having all values with same period aggregated, slicing them if necessary.
 func (t *Timeline[T]) ResolveConflicts(f func(p Period, a T, b T) T) (Timeline[T], error) {
 	var items []PeriodValue[T]
@@ -78,20 +97,8 @@ func (t *Timeline[T]) ResolveConflicts(f func(p Period, a T, b T) T) (Timeline[T
 		}
 
 		if next.Period.After(currentPeriod) {
-			periods := SplitAllPeriods(buffer)
-
-			for _, period := range periods {
-				var currentValue T
-
-				for _, candidate := range buffer {
-					if candidate.Period.Intersects(period) {
-						currentValue = f(period, candidate.Value, currentValue)
-					}
-				}
-
-				items = append(items, NewPeriodValue(period, currentValue))
-			}
-
+			computed := computeValuesOnSamePeriods(buffer, f)
+			items = append(items, computed...)
 			currentPeriod = next.Period
 
 			buffer = ClampPeriods(buffer, currentPeriod)
@@ -108,9 +115,9 @@ func (t *Timeline[T]) ResolveConflicts(f func(p Period, a T, b T) T) (Timeline[T
 		buffer = append(buffer, next)
 	}
 
-	for _, pv := range buffer {
-		items = append(items, pv)
-	}
+	computed := computeValuesOnSamePeriods(buffer, f)
+	items = append(items, computed...)
+	buffer = make([]PeriodValue[T], 0)
 
 	return Timeline[T]{Items: items}, nil
 }
@@ -143,7 +150,25 @@ func (t *Timeline[T]) Optimize(equalityComparer func(a T, b T) bool) Timeline[T]
 }
 
 // Aggregate two timelines and return another timeline.
-func (t *Timeline[T]) Aggregate(other *Timeline[T], f func(period Period, a T, b T) T) (*Timeline[T], error) {
+func (t *Timeline[T]) Aggregate(other *Timeline[T], f func(period Period, a T, b T) T) (Timeline[T], error) {
+	c1 := len(t.Items)
+	c2 := len(other.Items)
 
-	return other, nil
+	if c1 == 0 {
+		return *other, nil
+	}
+	if c2 == 0 {
+		return *t, nil
+	}
+
+	concat := Timeline[T]{
+		Items: append(t.Items, other.Items...),
+	}
+	concat.SortTimelineByPeriodStart()
+	result, err := concat.ResolveConflicts(f)
+	if err != nil {
+		return Timeline[T]{}, err
+	}
+
+	return result, nil
 }
