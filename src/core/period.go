@@ -17,6 +17,10 @@ func NewPeriod(start, end time.Time) (*Period, error) {
 	return &Period{Start: start, End: end}, nil
 }
 
+func Empty() Period {
+	return Period{Start: time.Time{}, End: time.Time{}}
+}
+
 // Day returns a Period for the given year, month and day.
 // The start is given day, and the end is the next day (exclusive).
 func Day(year int, month int, day int) (*Period, error) {
@@ -25,6 +29,10 @@ func Day(year int, month int, day int) (*Period, error) {
 	nextDay := start.AddDate(0, 0, 1)
 
 	return NewPeriod(start, nextDay)
+}
+
+func DateOnly(year int, month int, day int) time.Time {
+	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
 }
 
 // Month returns a Period for the given year and month.
@@ -101,8 +109,12 @@ func (p *Period) SplitByMonths() <-chan Period {
 	return p.Split(func(current time.Time) time.Time { return current.AddDate(0, 1, 0) })
 }
 
+func (p *Period) Before(other Period) bool {
+	return p.End.Before(other.Start) || p.End.Equal(other.Start)
+}
+
 func (p *Period) After(other Period) bool {
-	return other.Start.After(p.End) || other.Start.Equal(p.End)
+	return p.Start.After(other.End) || p.Start.Equal(other.End)
 }
 
 // Helper function to find the minimum of two times
@@ -155,4 +167,28 @@ func (p *Period) SplitFromPeriod(period Period) <-chan Period {
 	}()
 
 	return ch
+}
+
+// IsEmpty checks if period is empty
+func (p *Period) IsEmpty() bool {
+	return !p.Start.Before(p.End)
+}
+
+func (p *Period) Clamp(limit Period) (Period, error) {
+	if p.Intersects(limit) {
+		start := maxTime(limit.Start, p.Start)
+		end := minTime(limit.End, p.End)
+		period, err := NewPeriod(start, end)
+		if err != nil {
+			return Empty(), err
+		}
+		return *period, nil
+	}
+
+	return Empty(), errors.New("limit is outside")
+}
+
+// IsContiguous checks if the other Period is contiguous
+func (p *Period) IsContiguous(other Period) bool {
+	return p.End.Equal(other.Start) || p.Start.Equal(other.End)
 }
