@@ -1,17 +1,26 @@
 package main
 
 import (
+	"GoNextFund/pages/home"
+	_import "GoNextFund/pages/import"
 	"fmt"
 	"github.com/codeanythingpossible/GoTimelines/timelines"
 	"html/template"
+	"log"
 	"net/http"
+	"os"
 )
 
 type Data struct {
 	Message string
 }
 
+type Navigation struct {
+	PageContent template.HTML
+}
+
 func main() {
+	// example of timeline use : will be removed
 	timeline1, err := timelines.
 		NewTimeLineBuilder[int]().
 		AddMonth(2024, 1, 100).
@@ -45,27 +54,43 @@ func main() {
 		fmt.Println(pv)
 	}
 
-	// Servir les fichiers statiques depuis "www"
-	fs := http.FileServer(http.Dir("www"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	// program starts here
 
+	// configure logger
+	file, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			fmt.Printf("Failed to close log file: %v", err)
+		}
+	}(file)
+
+	log.SetOutput(file)
+
+	fs := http.FileServer(http.Dir("www"))
+
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/update", updateHandler)
+
+	home.RegisterRoutes()
+	_import.RegisterRoutes()
+
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
-		fmt.Printf("Error starting server: %s\n", err)
+		log.Fatalf("Error starting server: %s\n", err)
 	}
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
+	page, err := home.GetDefaultContent()
 	tmpl := template.Must(template.ParseFiles("www/index.html"))
-	err := tmpl.Execute(w, Data{Message: "Bienvenue dans GoNextFund!"})
+
+	err = tmpl.Execute(w, Navigation{PageContent: template.HTML(page)})
 	if err != nil {
+		println(err.Error())
 		return
 	}
-}
-
-func updateHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.New("fragment").Parse(`<div hx-swap-oob="true" id="message">{{.Message}}</div>`))
-	tmpl.Execute(w, Data{Message: "Le message a été mis à jour!"})
 }

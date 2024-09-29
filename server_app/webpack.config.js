@@ -45,7 +45,16 @@ module.exports = {
                 {
                     from: '**/*.html',
                     to: '[path][name][ext]',
-                    context: 'templates/',
+                    context: 'layout/',
+                },
+            ],
+        }),
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: '**/*.html',
+                    to: 'pages/[path][name][ext]',
+                    context: 'pages/',
                 },
             ],
         })

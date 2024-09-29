@@ -1,0 +1,12 @@
+﻿<!-- Top bar -->
+<div class="bg-white p-4 border-b-2 border-black">
+    <h1 class="text-center text-3xl font-bold">{{.Title}}</h1>
+</div>
+
+<!-- Page content -->
+<div class="flex-grow bg-white p-8 border-t-2 border-b-2 border-red-500 m-4">
+    <div id="message">{{.Message}}</div>
+    <button hx-get="/home/update" hx-target="#message" class="border border-black p-1 hover:bg-blue-300">
+        Mettre à jour le message
+    </button>
+</div>
