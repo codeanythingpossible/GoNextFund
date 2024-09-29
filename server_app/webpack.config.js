@@ -6,20 +6,20 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
     entry: {
         main: './js/index.js',
-        styles: './css/main.css',
+        styles: './css/styles.css',
     },
     output: {
         filename: 'js/[name].bundle.js',
         path: path.resolve(__dirname, 'www'),
-        clean: true, // Nettoie le répertoire de sortie avant chaque build
+        clean: true,
     },
     module: {
         rules: [
             {
                 test: /\.css$/i,
                 use: [
-                    // Extrait le CSS dans des fichiers séparés
                     MiniCssExtractPlugin.loader,
+                    // 'style-loader',
                     'css-loader',
                     'postcss-loader',
                 ],
@@ -38,18 +38,18 @@ module.exports = {
     },
     plugins: [
         new MiniCssExtractPlugin({
-            filename: 'css/[name].css',
+            filename: './css/[name].css',
         }),
-        // new CopyWebpackPlugin({
-        //     patterns: [
-        //         {
-        //             from: '**/*.html', // Source des fichiers HTML
-        //             to: '[path][name][ext]', // Destination dans 'www'
-        //             context: 'templates/', // Contexte pour conserver la structure des dossiers
-        //         },
-        //     ],
-        // })
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: '**/*.html',
+                    to: '[path][name][ext]',
+                    context: 'templates/',
+                },
+            ],
+        })
     ],
-    mode: 'development', // Changez en 'production' pour des builds optimisés
-    devtool: 'source-map', // Utile pour le debugging
+    mode: 'development',
+    devtool: 'source-map',
 };

@@ -1,5 +1,5 @@
 import 'htmx.org';
-import '../css/main.css'
+import '../css/styles.css'
 
 function hello() {
     alert("Hello World!");
