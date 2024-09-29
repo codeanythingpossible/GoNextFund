@@ -78,19 +78,31 @@ func main() {
 	home.RegisterRoutes()
 	_import.RegisterRoutes()
 
-	err = http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", logRequest(http.DefaultServeMux))
 	if err != nil {
 		log.Fatalf("Error starting server: %s\n", err)
 	}
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	page, err := home.GetDefaultContent()
-	tmpl := template.Must(template.ParseFiles("www/index.html"))
+func logRequest(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
+		handler.ServeHTTP(w, r)
+	})
+}
 
-	err = tmpl.Execute(w, Navigation{PageContent: template.HTML(page)})
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	//page, err := home.GetDefaultContent()
+	tmpl := template.Must(template.ParseFiles("www/index.html"))
+	err := tmpl.Execute(w, nil)
 	if err != nil {
 		println(err.Error())
 		return
 	}
+
+	//err = tmpl.Execute(w, Navigation{PageContent: template.HTML(page)})
+	//if err != nil {
+	//	println(err.Error())
+	//	return
+	//}
 }

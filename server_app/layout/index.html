@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GoNextFund</title>
-    <!--  <script src="https://unpkg.com/htmx.org@1.8.4"></script>-->
     <link rel="stylesheet" href="/static/css/styles.css" >
 </head>
 <body>
@@ -19,24 +18,22 @@
             <p>Menu</p>
             <ul>
                 <li>
-                    <a hx-get="/home" hx-target="#page-content" class="cursor-pointer hover:underline text-blue-400">Home</a>
+                    <a href="#home" class="cursor-pointer hover:underline text-blue-400">Home</a>
                 </li>
                 <li>
-                    <a hx-get="/import" hx-target="#page-content" class="cursor-pointer hover:underline text-blue-400">Import</a>
+                    <a href="#import" class="cursor-pointer hover:underline text-blue-400">Import</a>
                 </li>
             </ul>
         </div>
     </div>
 
     <!-- Main content area -->
-    <div id="page-content" class="flex flex-col flex-grow">
-        {{.PageContent}}
+    <div id="page-content" class="flex flex-col flex-grow" hx-trigger="load delay:1s" hx-swap="innerHTML">
+        Content loading...
     </div>
 
 </div>
 
-
-<!-- Lien vers le bundle JavaScript -->
 <script src="/static/js/main.bundle.js"></script>
 <script src="/static/js/styles.bundle.js"></script>
 
