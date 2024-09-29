@@ -1,0 +1,1 @@
+{"version":3,"file":"css/styles.css","mappings":";;;;AACA;IACI,gDAAgD;IAChD,SAAS;IACT,UAAU;AACd","sources":["webpack://server_app/./css/main.css"],"sourcesContent":["\nbody {\n    font-family: Verdana, Geneva, Tahoma, sans-serif;\n    margin: 0;\n    padding: 0;\n}\n"],"names":[],"sourceRoot":""}

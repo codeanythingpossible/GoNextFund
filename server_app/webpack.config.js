@@ -24,22 +24,31 @@ module.exports = {
                     'postcss-loader',
                 ],
             },
-            // Ajoutez d'autres loaders (par ex., pour les images) si nécessaire
+            {
+                test: /\.m?js$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env'],
+                    },
+                },
+            }
         ],
     },
     plugins: [
         new MiniCssExtractPlugin({
             filename: 'css/[name].css',
         }),
-        new CopyWebpackPlugin({
-            patterns: [
-                {
-                    from: '**/*.html', // Source des fichiers HTML
-                    to: '[path][name][ext]', // Destination dans 'www'
-                    context: 'templates/', // Contexte pour conserver la structure des dossiers
-                },
-            ],
-        })
+        // new CopyWebpackPlugin({
+        //     patterns: [
+        //         {
+        //             from: '**/*.html', // Source des fichiers HTML
+        //             to: '[path][name][ext]', // Destination dans 'www'
+        //             context: 'templates/', // Contexte pour conserver la structure des dossiers
+        //         },
+        //     ],
+        // })
     ],
     mode: 'development', // Changez en 'production' pour des builds optimisés
     devtool: 'source-map', // Utile pour le debugging

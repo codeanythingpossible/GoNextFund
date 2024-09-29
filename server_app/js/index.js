@@ -1,4 +1,5 @@
 import 'htmx.org';
+import '../css/main.css'
 
 function hello() {
     alert("Hello World!");
