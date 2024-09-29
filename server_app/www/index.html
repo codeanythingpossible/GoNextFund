@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GoNextFund</title>
-    <link rel="stylesheet" href="/static/css/styles.css" >
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
 
@@ -16,19 +16,18 @@
         </div>
         <div class="">
             <p>Menu</p>
-            <ul>
-                <li>
-                    <a href="#home" class="cursor-pointer hover:underline text-blue-400">Home</a>
-                </li>
-                <li>
-                    <a href="#import" class="cursor-pointer hover:underline text-blue-400">Import</a>
-                </li>
-            </ul>
+
+            <nav class="flex flex-col items-start justify-between mt-2">
+                <a href="#home" class="w-full p-2 cursor-pointer hover:underline hover:bg-amber-200 text-blue-400">Home</a>
+                <a href="#import" class="w-full p-2 cursor-pointer hover:underline hover:bg-amber-200 text-blue-400">Import</a>
+                <a href="#settings" class="w-full p-2 cursor-pointer hover:underline hover:bg-amber-200 text-blue-400">Settings</a>
+            </nav>
+
         </div>
     </div>
 
     <!-- Main content area -->
-    <div id="page-content" class="flex flex-col flex-grow" hx-trigger="load delay:1s" hx-swap="innerHTML">
+    <div id="page-content" class="flex flex-col flex-grow p-4" hx-trigger="load delay:1s" hx-swap="innerHTML">
         Content loading...
     </div>
 

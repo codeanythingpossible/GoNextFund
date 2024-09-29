@@ -3,6 +3,7 @@ package main
 import (
 	"GoNextFund/pages/home"
 	_import "GoNextFund/pages/import"
+	"GoNextFund/pages/settings"
 	"fmt"
 	"github.com/codeanythingpossible/GoTimelines/timelines"
 	"html/template"
@@ -77,6 +78,7 @@ func main() {
 
 	home.RegisterRoutes()
 	_import.RegisterRoutes()
+	settings.RegisterRoutes()
 
 	err = http.ListenAndServe(":8080", logRequest(http.DefaultServeMux))
 	if err != nil {
@@ -92,17 +94,15 @@ func logRequest(handler http.Handler) http.Handler {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	//page, err := home.GetDefaultContent()
+	if r.URL.Path != "/" {
+		log.Printf("%s %s %s [404]\n", r.RemoteAddr, r.Method, r.URL)
+		http.NotFound(w, r)
+		return
+	}
 	tmpl := template.Must(template.ParseFiles("www/index.html"))
 	err := tmpl.Execute(w, nil)
 	if err != nil {
 		println(err.Error())
 		return
 	}
-
-	//err = tmpl.Execute(w, Navigation{PageContent: template.HTML(page)})
-	//if err != nil {
-	//	println(err.Error())
-	//	return
-	//}
 }

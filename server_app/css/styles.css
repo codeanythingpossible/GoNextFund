@@ -8,4 +8,6 @@ body {
     padding: 0;
 }
 
-
+input {
+    @apply border border-gray-300 rounded p-1 hover:bg-gray-100 cursor-pointer;
+}
