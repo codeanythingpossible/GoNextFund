@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoNextFund</title>
+    <link rel="stylesheet" href="/static/css/styles.css" >
+</head>
+<body>
+
+<div class="flex h-screen">
+
+    <div class="border-r-2 border-black flex-none p-4 w-1/4">
+        <div class="mb-8">
+            <h1 class="font-bold">GoNextFund</h1>
+        </div>
+        <div class="">
+            <p>Menu</p>
+            <ul>
+                <li>
+                    <a href="#home" class="cursor-pointer hover:underline text-blue-400">Home</a>
+                </li>
+                <li>
+                    <a href="#import" class="cursor-pointer hover:underline text-blue-400">Import</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main content area -->
+    <div id="page-content" class="flex flex-col flex-grow" hx-trigger="load delay:1s" hx-swap="innerHTML">
+        Content loading...
+    </div>
+
+</div>
+
+<script src="/static/js/main.bundle.js"></script>
+<script src="/static/js/styles.bundle.js"></script>
+
+</body>
+</html>
